@@ -1,25 +1,32 @@
--- MATRIX HUB V6.5
--- Repo: walterblack-lab/matrixv2
+-- MATRIX HUB V7.0 - CACHE BUSTER & QUEST UPDATE
+local username = "walterblack-lab"
+local repo = "matrixv2"
+local base = "https://raw.githubusercontent.com/"..username.."/"..repo.."/main/"
 
-local raw = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/"
+-- DMGDEBUG szűrő (hogy ne lásd a spammelést)
+game:GetService("LogService").MessageOut:Connect(function(msg)
+    if msg:find("DMGDEBUG") then return end
+end)
 
--- Biztonságos betöltés: ha nincs meg a fájl, szól a konzol
-local function Load(file)
-    local success, content = pcall(function() return game:HttpGet(raw .. file) end)
+local function Load(path)
+    -- A véletlen szám a végén kényszeríti a frissítést
+    local url = base .. path .. "?nocache=" .. math.random(1, 10000)
+    local success, content = pcall(function() return game:HttpGet(url) end)
+    
     if success and not content:find("404") then
-        return loadstring(content)()
+        local func, err = loadstring(content)
+        if func then return func() else warn("Hiba: " .. err) end
     end
-    warn("Matrix Error: Nem talalhato a fajl -> " .. file)
+    warn("Matrix Error: Meg mindig nem erem el -> " .. path)
     return nil
 end
 
--- Előbb a motorokat töltjük be
 _G.Matrix_Modules = {
     Net = Load("modules/net.lua"),
     Tween = Load("modules/tween.lua")
 }
 
--- Ha a motorok készen állnak, jöhet a menü
 if _G.Matrix_Modules.Net and _G.Matrix_Modules.Tween then
     Load("main.lua")
+    print("Matrix Hub V7: Sikeres betoltes frissitve!")
 end
