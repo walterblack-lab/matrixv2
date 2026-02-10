@@ -1,12 +1,18 @@
--- MATRIX HUB LOADER
--- Description: Modular loader for the Blox Fruits project.
+-- MATRIX HUB OFFICIAL LOADER
+-- User: walterblack-lab | Repo: matrix
 
-local github = "https://raw.githubusercontent.com/walterblack-lab/Matrix-Hub-BloxFruits/main/"
+local base = "https://raw.githubusercontent.com/walterblack-lab/matrix/refs/heads/main/"
 
+-- Modulok betöltése a megadott mappákból
 _G.Matrix_Modules = {
-    Net = loadstring(game:HttpGet(github .. "modules/net.lua"))(),
-    Tween = loadstring(game:HttpGet(github .. "modules/tween.lua"))(),
-    Farm = loadstring(game:HttpGet(github .. "modules/farm.lua"))()
+    Net = loadstring(game:HttpGet(base .. "modules/net.lua"))(),
+    Tween = loadstring(game:HttpGet(base .. "modules/tween.lua"))(),
 }
 
-loadstring(game:HttpGet(github .. "main.lua"))()
+-- Fő menü betöltése
+if _G.Matrix_Modules.Net and _G.Matrix_Modules.Tween then
+    loadstring(game:HttpGet(base .. "main.lua"))()
+    print("Matrix Hub: Sikeresen betöltve!")
+else
+    warn("Matrix Hub: Hiba a modulok betöltésekor! Ellenőrizd a GitHub mappákat.")
+end
