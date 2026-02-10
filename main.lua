@@ -10,13 +10,13 @@ local Window = Rayfield:CreateWindow({
 
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- AGRESSZÍV FEGYVER ELŐVÉTEL
-local function forceEquip()
+-- MEGBÍZHATÓ FEGYVER ELŐVÉTEL
+local function equipWeapon()
     local p = game.Players.LocalPlayer
     local char = p.Character
-    if not char or char:FindFirstChildOfClass("Tool") then return end
+    if not char then return end
+    if char:FindFirstChildOfClass("Tool") then return end
     
-    -- Megkeressük az öklöt (Combat)
     local tool = p.Backpack:FindFirstChild("Combat") or p.Backpack:FindFirstChildOfClass("Tool")
     if tool then
         char.Humanoid:EquipTool(tool)
@@ -29,6 +29,7 @@ FarmTab:CreateToggle({
    Callback = function(Value)
       _G.AutoFarm = Value
       if Value then
+         -- 1. CIKLUS: MOZGÁS (Lassabb, hogy ne rángasson)
          task.spawn(function()
             while _G.AutoFarm do
                pcall(function()
@@ -36,7 +37,6 @@ FarmTab:CreateToggle({
                   local dist = math.huge
                   local lp = game.Players.LocalPlayer
                   
-                  -- NPC Keresés
                   for _, v in pairs(workspace.Enemies:GetChildren()) do
                      if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
                         local d = (v.HumanoidRootPart.Position - lp.Character.HumanoidRootPart.Position).Magnitude
@@ -45,23 +45,30 @@ FarmTab:CreateToggle({
                   end
 
                   if target then
-                     forceEquip() -- Fegyver kényszerítése
+                     equipWeapon()
+                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 6, 0) -- 6 méterrel fölé
                      
-                     local farmPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 5.5, 0) -- 5.5 méterrel fölé
-                     
-                     -- CSAK AKKOR MOZDULUNK, HA MESSZE VAN (Megszünteti a rángatást)
-                     if (lp.Character.HumanoidRootPart.Position - farmPos.p).Magnitude > 4 then
-                        Modules.Tween.To(farmPos, 300)
-                        task.wait(0.2)
+                     -- CSAK AKKOR TELEPORTÁLUNK, HA MESSZE VAGYUNK
+                     if (lp.Character.HumanoidRootPart.Position - targetPos.p).Magnitude > 8 then
+                        Modules.Tween.To(targetPos, 300)
                      else
-                        -- Ha ott vagyunk, megállunk és ÜTÜNK
+                        -- Ha ott vagyunk, csak finoman korrigálunk, nem rángatunk
                         Modules.Tween.Stop()
-                        lp.Character.HumanoidRootPart.CFrame = farmPos
-                        Modules.Net.Remotes.Attack:FireServer()
+                        lp.Character.HumanoidRootPart.CFrame = lp.Character.HumanoidRootPart.CFrame:Lerp(targetPos, 0.1)
                      end
                   end
                end)
-               task.wait(0.05) -- Gyors ütési sebesség
+               task.wait(0.5) -- Ritkább pozíció frissítés = Sima ütés
+            end
+         end)
+
+         -- 2. CIKLUS: TÁMADÁS (Ez pörög ezerrel)
+         task.spawn(function()
+            while _G.AutoFarm do
+               pcall(function()
+                  Modules.Net.Remotes.Attack:FireServer()
+               end)
+               task.wait(0.01) -- Brutál gyors ütés
             end
          end)
       end
