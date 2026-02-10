@@ -4,7 +4,7 @@ _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
    Name = "MATRIX HUB | BLOX FRUITS",
-   Theme = "Amethyst",
+   Theme = "Bloom",
    ConfigurationSaving = { Enabled = false }
 })
 
