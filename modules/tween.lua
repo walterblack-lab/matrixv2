@@ -1,25 +1,47 @@
-local TweenModule = {}
-local TS = game:GetService("TweenService")
-local currentTween = nil
+-- TWEEN MODULE (Matrix Hub - Ultra-Low RAM Edition)
+local tween = {}
 
-function TweenModule.To(targetCFrame, speed)
-    local char = game.Players.LocalPlayer.Character
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+local TweenService = game:GetService("TweenService")
+local lp = game.Players.LocalPlayer
+local currentTween = nil -- Egy változóban tartjuk a tween-t, hogy újrahasznosítsuk
+
+function tween.To(targetCFrame, speed)
+    local char = lp.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
     
-    -- Ha már fut egy repülés, megállítjuk
-    if currentTween then currentTween:Cancel() end
+    local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    local duration = distance / speed
     
-    local dist = (hrp.Position - targetCFrame.p).Magnitude
-    local info = TweenInfo.new(dist/speed, Enum.EasingStyle.Linear)
-    currentTween = TS:Create(hrp, info, {CFrame = targetCFrame})
+    -- Meglévő mozgás megállítása és takarítása (Memory Leak elleni védelem)
+    if currentTween then
+        currentTween:Cancel()
+        currentTween:Destroy() -- Ez törli ki a RAM-ból a régi objektumot
+        currentTween = nil
+    end
+    
+    local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    
+    -- Új tween létrehozása
+    currentTween = TweenService:Create(hrp, info, {CFrame = targetCFrame})
+    
+    -- Automatikus takarítás, ha a mozgás befejeződött
+    currentTween.Completed:Connect(function()
+        if currentTween then
+            currentTween:Destroy()
+            currentTween = nil
+        end
+    end)
     
     currentTween:Play()
-    return currentTween
 end
 
-function TweenModule.Stop()
-    if currentTween then currentTween:Cancel() end
+function tween.Stop()
+    if currentTween then
+        currentTween:Cancel()
+        currentTween:Destroy()
+        currentTween = nil
+    end
 end
 
-return TweenModule
+return tween
