@@ -1,36 +1,25 @@
--- MATRIX HUB V6.3 OFFICIAL LOADER
--- User: walterblack-lab | Repository: matrixv2
--- Description: Corrected pathing for raw github content
+-- MATRIX HUB V6.5
+-- Repo: walterblack-lab/matrixv2
 
-local base = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/"
+local raw = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/"
 
-local function GetFile(path)
-    local url = base .. path
-    local success, content = pcall(function()
-        return game:HttpGet(url)
-    end)
+-- Biztonságos betöltés: ha nincs meg a fájl, szól a konzol
+local function Load(file)
+    local success, content = pcall(function() return game:HttpGet(raw .. file) end)
     if success and not content:find("404") then
-        return content
+        return loadstring(content)()
     end
+    warn("Matrix Error: Nem talalhato a fajl -> " .. file)
     return nil
 end
 
--- Loading sequence
-local netCode = GetFile("modules/net.lua")
-local tweenCode = GetFile("modules/tween.lua")
-local mainCode = GetFile("main.lua")
+-- Előbb a motorokat töltjük be
+_G.Matrix_Modules = {
+    Net = Load("modules/net.lua"),
+    Tween = Load("modules/tween.lua")
+}
 
-if netCode and tweenCode and mainCode then
-    -- Module Initialization
-    _G.Matrix_Modules = {
-        Net = loadstring(netCode)(),
-        Tween = loadstring(tweenCode)()
-    }
-    -- Execute Main UI
-    loadstring(mainCode)()
-    print("Matrix Hub: Connection established. UI Loading...")
-else
-    warn("Matrix Hub: Critical Error! Files not found on GitHub.")
-    print("Checked path: " .. base)
-    print("Please ensure your folder on GitHub is named 'modules' (lowercase).")
+-- Ha a motorok készen állnak, jöhet a menü
+if _G.Matrix_Modules.Net and _G.Matrix_Modules.Tween then
+    Load("main.lua")
 end
