@@ -3,28 +3,38 @@ local Modules = _G.Matrix_Modules
 _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
-   Name = "MATRIX HUB | BLOX FRUITS",
-   Theme = "DarkBlue",
+   Name = "MATRIX HUBX FRUITS",
+   Theme = "Bloom",
    ConfigurationSaving = { Enabled = false }
 })
 
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- Fegyver és Ütés kényszerítése
-local function startPunching()
+-- SPECIÁLIS ÜTÉS FUNKCIÓ (A te esetedre szabva)
+local function forcePunch()
     local p = game.Players.LocalPlayer
     local char = p.Character
     if not char then return end
     
-    local tool = char:FindFirstChildOfClass("Tool") or p.Backpack:FindFirstChild("Combat") or p.Backpack:FindFirstChildOfClass("Tool")
-    if tool and tool.Parent ~= char then 
-        char.Humanoid:EquipTool(tool) 
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then
+        tool = p.Backpack:FindFirstChild("Combat") or p.Backpack:FindFirstChildOfClass("Tool")
+        if tool then char.Humanoid:EquipTool(tool) end
     end
     
     if tool then
+        -- 1. Kényszerítjük a fegyvert, hogy "azt higgye", kattintottál
         tool:Activate()
-        -- Közvetlen hívás a te net modulodból kinyerve
-        Modules.Net.Remotes.Attack:FireServer(0) 
+        
+        -- 2. Közvetlenül meghívjuk az ütés animációját a Humanoidon keresztül
+        local anim = char.Humanoid:LoadAnimation(tool.Animations.Attack) -- Blox Fruits specifikus
+        if anim then anim:Play() end
+        
+        -- 3. Megpróbáljuk a Net modult is, de egy kis késleltetéssel (mint a valódi ütés)
+        task.spawn(function()
+            task.wait(0.05)
+            Modules.Net.Remotes.Attack:FireServer()
+        end)
     end
 end
 
@@ -50,28 +60,29 @@ FarmTab:CreateToggle({
                   end
 
                   if target then
-                     -- MÓDOSÍTOTT POZÍCIÓ: 5 méterrel az NPC elé, nem a fejére!
-                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                     -- Pozíció: 4.5 méterrel az NPC elé (hogy az ököl biztosan érjen)
+                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4.5)
                      
-                     if (hrp.Position - targetPos.p).Magnitude > 7 then
+                     if (hrp.Position - targetPos.p).Magnitude > 6 then
                         Modules.Tween.To(targetPos, 300)
                      else
-                        -- MEGÁLLÍTÁS: Ez a kulcs! Ha nem mozogsz, a szerver engedi a sebzést.
+                        -- MEGÁLLÁS ÉS ÜTÉS
                         Modules.Tween.Stop()
                         hrp.CFrame = targetPos
                         hrp.Velocity = Vector3.new(0,0,0)
                         
-                        startPunching()
+                        forcePunch() -- Itt hívjuk meg a javított ütést
                      end
                   end
                end)
-               task.wait(0.1) -- Hagyni kell időt a szervernek regisztrálni
+               task.wait(0.12) -- Megfelelő ütem a szervernek
             end
          end)
       end
    end,
 })
 
+-- System Tab
 local SystemTab = Window:CreateTab("System", 4483362458)
 SystemTab:CreateButton({
    Name = "Destroy Script (Unload)",
