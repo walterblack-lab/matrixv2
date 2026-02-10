@@ -4,30 +4,31 @@ _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
    Name = "MATRIX HUB | BLOX FRUITS",
-   Theme = "AmberGlow",
+   Theme = "Amethyst",
    ConfigurationSaving = { Enabled = false }
 })
 
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- FEGYVER KEZELÉS
-local function equipAndAttack()
+-- SPECIÁLIS ÜTÉS FUNKCIÓ
+local function superAttack()
     local p = game.Players.LocalPlayer
     local char = p.Character
     if not char then return end
     
-    -- 1. Fegyver kézbevétele, ha nincs ott semmi
+    -- Fegyver kézbevétele
     local tool = char:FindFirstChildOfClass("Tool")
     if not tool then
         tool = p.Backpack:FindFirstChild("Combat") or p.Backpack:FindFirstChildOfClass("Tool")
-        if tool then
-            char.Humanoid:EquipTool(tool)
-        end
+        if tool then char.Humanoid:EquipTool(tool) end
     end
     
-    -- 2. KÖZVETLEN AKTIVÁLÁS (Ez helyettesíti a kattintást)
     if tool then
-        tool:Activate() -- Meghívja a fegyver saját támadó funkcióját
+        -- 1. Direkt aktiválás
+        tool:Activate()
+        -- 2. Egérkattintás szimulálása a virtuális felhasználóval
+        game:GetService("VirtualUser"):CaptureController()
+        game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0))
     end
 end
 
@@ -43,7 +44,6 @@ FarmTab:CreateToggle({
                   local lp = game.Players.LocalPlayer
                   local hrp = lp.Character.HumanoidRootPart
                   
-                  -- NPC keresés
                   local target = nil
                   local dist = math.huge
                   for _, v in pairs(workspace.Enemies:GetChildren()) do
@@ -54,22 +54,23 @@ FarmTab:CreateToggle({
                   end
 
                   if target then
-                     -- Pozíció fixálása (6 méter magasban, hogy ne pattogj)
-                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 6, 0)
+                     -- Pozíció: 5.2 méter (kicsit közelebb, mint eddig)
+                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 5.2, 0)
                      
-                     if (hrp.Position - targetPos.p).Magnitude > 8 then
+                     -- Távolság-alapú mozgás (ha 6 méteren belül vagyunk, NEM teleportálunk többet)
+                     if (hrp.Position - targetPos.p).Magnitude > 6 then
                         Modules.Tween.To(targetPos, 300)
                      else
-                        -- MEGÁLLÍTÁS ÉS TÁMADÁS
+                        -- CSAK ITT ÁLLUNK MEG ÉS ÜTÜNK (nincs több mozgás parancs!)
                         hrp.CFrame = targetPos
                         hrp.Velocity = Vector3.new(0,0,0)
                         
-                        equipAndAttack() -- Itt hívjuk meg az aktiválást
-                        Modules.Net.Remotes.Attack:FireServer() -- Plusz a hálózati csomag
+                        superAttack() -- Aktiváljuk a "szimulált" kattintást
+                        Modules.Net.Remotes.Attack:FireServer()
                      end
                   end
                end)
-               task.wait(0.05) -- Gyors ciklus az ütésekhez
+               task.wait(0.1) -- Hagyunk időt az animációnak!
             end
          end)
       end
