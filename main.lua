@@ -1,6 +1,5 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Modules = _G.Matrix_Modules
-
 _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
@@ -11,16 +10,13 @@ local Window = Rayfield:CreateWindow({
 
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- MEGBÍZHATÓ FEGYVER ELŐVÉTEL
-local function equipWeapon()
+-- AGRESSZÍV FEGYVER ELŐVÉTEL
+local function forceEquip()
     local p = game.Players.LocalPlayer
     local char = p.Character
-    if not char then return end
+    if not char or char:FindFirstChildOfClass("Tool") then return end
     
-    -- Megnézzük, van-e már valami a kezünkben
-    if char:FindFirstChildOfClass("Tool") then return end
-    
-    -- Ha nincs, kikeressük az öklöt (Combat) vagy bármilyen fegyvert
+    -- Megkeressük az öklöt (Combat)
     local tool = p.Backpack:FindFirstChild("Combat") or p.Backpack:FindFirstChildOfClass("Tool")
     if tool then
         char.Humanoid:EquipTool(tool)
@@ -38,40 +34,41 @@ FarmTab:CreateToggle({
                pcall(function()
                   local target = nil
                   local dist = math.huge
-                  local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+                  local lp = game.Players.LocalPlayer
                   
-                  -- Legközelebbi NPC megkeresése
+                  -- NPC Keresés
                   for _, v in pairs(workspace.Enemies:GetChildren()) do
-                     if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                        local d = (v.HumanoidRootPart.Position - hrp.Position).Magnitude
+                     if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        local d = (v.HumanoidRootPart.Position - lp.Character.HumanoidRootPart.Position).Magnitude
                         if d < dist then dist = d; target = v end
                      end
                   end
 
                   if target then
-                     equipWeapon()
-                     local targetPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                     forceEquip() -- Fegyver kényszerítése
                      
-                     -- JAVÍTÁS: Csak akkor teleportál, ha 10 méternél messzebb van!
-                     -- Ez megakadályozza a rángatózást.
-                     if (hrp.Position - targetPos.p).Magnitude > 10 then
-                        Modules.Tween.To(targetPos, 300)
-                        task.wait(0.5) -- Időt hagyunk a megérkezésre
+                     local farmPos = target.HumanoidRootPart.CFrame * CFrame.new(0, 5.5, 0) -- 5.5 méterrel fölé
+                     
+                     -- CSAK AKKOR MOZDULUNK, HA MESSZE VAN (Megszünteti a rángatást)
+                     if (lp.Character.HumanoidRootPart.Position - farmPos.p).Magnitude > 4 then
+                        Modules.Tween.To(farmPos, 300)
+                        task.wait(0.2)
                      else
-                        -- Ha már ott vagyunk, csak fixáljuk a pozíciót és ÜTÜNK
-                        hrp.CFrame = targetPos
+                        -- Ha ott vagyunk, megállunk és ÜTÜNK
+                        Modules.Tween.Stop()
+                        lp.Character.HumanoidRootPart.CFrame = farmPos
                         Modules.Net.Remotes.Attack:FireServer()
                      end
                   end
                end)
-               task.wait(0.1) -- Fontos szünet a stabilitáshoz
+               task.wait(0.05) -- Gyors ütési sebesség
             end
          end)
       end
    end,
 })
 
--- System Tab az Unloadhoz
+-- System Tab
 local SystemTab = Window:CreateTab("System", 4483362458)
 SystemTab:CreateButton({
    Name = "Destroy Script (Unload)",
