@@ -11,8 +11,22 @@ local Window = Rayfield:CreateWindow({
 
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
+-- Segédfüggvény a fegyver elővételéhez
+local function equipWeapon()
+    local p = game.Players.LocalPlayer
+    local backpack = p.Backpack
+    local char = p.Character
+    -- Megkeressük az első fegyvert (Combat vagy Sword)
+    for _, tool in pairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            char.Humanoid:EquipTool(tool)
+            break
+        end
+    end
+end
+
 FarmTab:CreateToggle({
-   Name = "Auto Farm (All NPCs)",
+   Name = "Auto Farm (Starter Island)",
    CurrentValue = false,
    Callback = function(Value)
       _G.AutoFarm = Value
@@ -28,8 +42,11 @@ FarmTab:CreateToggle({
                         if d < dist then dist = d; target = v end
                      end
                   end
+
                   if target then
-                     Modules.Tween.To(target.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0), 250)
+                     equipWeapon() -- Fegyver kézbe vétele
+                     -- ÚJ POZÍCIÓ: Az NPC elé repülünk 2 méterrel, nem a feje fölé
+                     Modules.Tween.To(target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2.5), 300)
                      Modules.Net.Remotes.Attack:FireServer()
                   end
                end)
@@ -40,6 +57,7 @@ FarmTab:CreateToggle({
    end,
 })
 
+-- System Tab az Unload gombbal
 local SystemTab = Window:CreateTab("System", 4483362458)
 SystemTab:CreateButton({
    Name = "Destroy Script (Unload)",
