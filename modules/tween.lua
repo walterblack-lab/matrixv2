@@ -1,31 +1,25 @@
 local TweenModule = {}
 local TS = game:GetService("TweenService")
+local currentTween = nil
 
 function TweenModule.To(targetCFrame, speed)
     local char = game.Players.LocalPlayer.Character
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
+    -- Ha már fut egy repülés, megállítjuk
+    if currentTween then currentTween:Cancel() end
+    
     local dist = (hrp.Position - targetCFrame.p).Magnitude
     local info = TweenInfo.new(dist/speed, Enum.EasingStyle.Linear)
-    local tween = TS:Create(hrp, info, {CFrame = targetCFrame})
+    currentTween = TS:Create(hrp, info, {CFrame = targetCFrame})
     
-    -- NoClip aktiválása
-    task.spawn(function()
-        local connection
-        connection = game:GetService("RunService").Stepped:Connect(function()
-            if _G.AutoFarm then
-                for _, v in pairs(char:GetChildren()) do
-                    if v:IsA("BasePart") then v.CanCollide = false end
-                end
-            else
-                connection:Disconnect()
-            end
-        end)
-    end)
-    
-    tween:Play()
-    return tween
+    currentTween:Play()
+    return currentTween
+end
+
+function TweenModule.Stop()
+    if currentTween then currentTween:Cancel() end
 end
 
 return TweenModule
