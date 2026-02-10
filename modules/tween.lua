@@ -8,8 +8,9 @@ function TweenModule.To(targetCFrame, speed)
     
     local dist = (hrp.Position - targetCFrame.p).Magnitude
     local info = TweenInfo.new(dist/speed, Enum.EasingStyle.Linear)
+    local tween = TS:Create(hrp, info, {CFrame = targetCFrame})
     
-    -- NoClip aktiválása (hogy átmenjen a falon)
+    -- NoClip aktiválása
     task.spawn(function()
         local connection
         connection = game:GetService("RunService").Stepped:Connect(function()
@@ -23,7 +24,6 @@ function TweenModule.To(targetCFrame, speed)
         end)
     end)
     
-    local tween = TS:Create(hrp, info, {CFrame = targetCFrame})
     tween:Play()
     return tween
 end
