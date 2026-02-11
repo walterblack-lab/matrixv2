@@ -1,24 +1,20 @@
--- COMBAT MODULE (Matrix Hub)
+-- COMBAT MODULE (Matrix Hub - Blox Fruits)
 local combat = {}
 
 function combat.attack(targetNpc)
     local char = game.Players.LocalPlayer.Character
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChild("Humanoid")
+    if not char or not targetNpc then return end
     
-    if hrp and humanoid and targetNpc:FindFirstChild("HumanoidRootPart") then
-        humanoid:ChangeState(11)
+    -- NPC-re nézés kényszerítése (hogy a sebzés regisztráljon)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp and targetNpc:FindFirstChild("HumanoidRootPart") then
         hrp.CFrame = CFrame.lookAt(hrp.Position, targetNpc.HumanoidRootPart.Position)
-        hrp.Velocity = Vector3.new(0,0,0)
+    end
 
-        local tool = char:FindFirstChildOfClass("Tool")
-        if tool then
-            tool:Activate()
-            local net = _G.Matrix_Modules.net
-            if net and net.Remotes and net.Remotes.Attack then
-                net.Remotes.Attack:FireServer(0)
-            end
-        end
+    -- Fizikai ütés és eszköz használata
+    local tool = char:FindFirstChildOfClass("Tool")
+    if tool then
+        tool:Activate() -- Aktiválja a kardot/ökölt
     end
 end
 
