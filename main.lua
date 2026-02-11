@@ -1,9 +1,9 @@
--- MAIN.LUA (Matrix Hub - Final Asset-Locked Edition)
+-- MAIN.LUA (Matrix Hub - Pro Fast Attack Edition)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local modules = _G.Matrix_Modules
 
 local Window = Rayfield:CreateWindow({
-   Name = "MATRIX HUB | PRO",
+   Name = "MATRIX",
    LoadingTitle = "Matrix Hub Loading...",
    LoadingSubtitle = "by WalterBlack",
    ConfigurationSaving = { Enabled = false }
@@ -11,28 +11,40 @@ local Window = Rayfield:CreateWindow({
 
 local FarmTab = Window:CreateTab("Auto Farm")
 local SpyTab = Window:CreateTab("Debug Spy")
-local SettingsTab = Window:CreateTab("Settings")
-
--- Spy összekötése
-local logLabel = SpyTab:CreateLabel("Status: Ready")
-if modules and modules.spy then
-    modules.spy.init(logLabel)
-    modules.spy.log("Systems Online")
-end
 
 _G.AutoFarm = false
-local currentTarget = nil
 
--- Célpont kereső függvény
-local function getClosestNPC()
-    if currentTarget and currentTarget:FindFirstChild("Humanoid") and currentTarget.Humanoid.Health > 0 then
-        return currentTarget
+-- PRO LOGIC: Belső keretrendszer elérése (debug upvalues)
+local function getCombatController()
+    local success, result = pcall(function()
+        local framework = require(game:GetService("Players").LocalPlayer.PlayerScripts.CombatFramework)
+        local controller = debug.getupvalues(framework)[2]
+        return controller.activeController
+    end)
+    return success and result or nil
+end
+
+-- Tényleges sebzés regisztráció
+local function executeFastAttack()
+    local controller = getCombatController()
+    if controller then
+        controller:attack() -- Animáció és belső logika
+        game:GetService("ReplicatedStorage").Modules.Net["RE/RegisterAttack"]:FireServer(0.125) -- Sebzés
     end
+end
+
+local function getClosestNPC()
     local target, dist = nil, math.huge
-    local enemiesFolder = workspace:FindFirstChild("Enemies")
-    if enemiesFolder then
-        for _, enemy in pairs(enemiesFolder:GetChildren()) do
+    local enemies = workspace:FindFirstChild("Enemies")
+    if enemies then
+        for _, enemy in pairs(enemies:GetChildren()) do
             if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
                 local d = (enemy.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
                 if d < dist then dist = d; target = enemy end
             end
+        end
+    end
+    return target
+end
+
+local
