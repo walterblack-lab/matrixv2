@@ -1,29 +1,26 @@
--- COMBAT MODULE (Matrix Hub - RAM Optimized)
+-- COMBAT MODULE (Matrix Hub - Final Stable)
 local combat = {}
 
 function combat.attack(targetNpc)
-    local lp = game.Players.LocalPlayer
-    local char = lp.Character
+    local char = game.Players.LocalPlayer.Character
     if not char then return end
     
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local humanoid = char:FindFirstChild("Humanoid")
-    local npcHrp = targetNpc and targetNpc:FindFirstChild("HumanoidRootPart")
     
-    if hrp and humanoid and npcHrp then
-        -- RAM/CPU optimalizálás: Csak akkor váltunk állapotot, ha kell
-        if humanoid:GetState() ~= Enum.HumanoidStateType.RunningNoPhysics then
-            humanoid:ChangeState(11)
-        end
+    if hrp and humanoid and targetNpc and targetNpc:FindFirstChild("HumanoidRootPart") then
+        -- Kényszerített állapot a repüléshez/helyben maradáshoz
+        humanoid:ChangeState(11)
+        
+        -- NPC-re nézés
+        hrp.CFrame = CFrame.lookAt(hrp.Position, targetNpc.HumanoidRootPart.Position)
+        hrp.Velocity = Vector3.new(0,0,0)
 
-        -- Irányba állítás és stabilizálás
-        hrp.CFrame = CFrame.lookAt(hrp.Position, npcHrp.Position)
-        hrp.Velocity = Vector3.new(0, 0, 0)
-
-        -- Támadás
+        -- Ütés
         local tool = char:FindFirstChildOfClass("Tool")
         if tool then
             tool:Activate()
+            -- Biztonságos távoli hívás
             local net = _G.Matrix_Modules.net
             if net and net.Remotes and net.Remotes.Attack then
                 net.Remotes.Attack:FireServer(0)
