@@ -1,32 +1,25 @@
--- COMBAT MODULE (Matrix Hub - Auto-Equip Edition)
+-- COMBAT MODULE (Final Attack Speed)
 local combat = {}
 
 function combat.attack(targetNpc, weaponType)
     local char = game.Players.LocalPlayer.Character
-    local backpack = game.Players.LocalPlayer.Backpack
     if not char or not targetNpc then return end
     
-    -- Auto-Equip logika
+    -- Auto-Equip (Backpack-ből elővétel)
     local tool = char:FindFirstChildOfClass("Tool")
     if not tool or (tool and tool.ToolTip ~= weaponType) then
-        -- Megkeressük a hátizsákban a megfelelő típusú eszközt
-        for _, v in pairs(backpack:GetChildren()) do
-            if v:IsA("Tool") and (v.ToolTip == weaponType or weaponType == "Any") then
-                char.Humanoid:EquipTool(v)
-                break
-            end
-        end
+        local bpTool = game.Players.LocalPlayer.Backpack:FindFirstChild(weaponType) or game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+        if bpTool then char.Humanoid:EquipTool(bpTool) end
     end
 
-    -- Támadás és irányzék
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp and targetNpc:FindFirstChild("HumanoidRootPart") then
-        local targetPos = targetNpc.HumanoidRootPart.Position
-        hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z))
+        -- NPC-re nézés
+        hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetNpc.HumanoidRootPart.Position.X, hrp.Position.Y, targetNpc.HumanoidRootPart.Position.Z))
         
-        local currentTool = char:FindFirstChildOfClass("Tool")
-        if currentTool then
-            currentTool:Activate()
+        -- Gyors egymásutáni ütések (Spam)
+        if tool then
+            tool:Activate()
         end
     end
 end
