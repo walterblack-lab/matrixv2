@@ -1,60 +1,33 @@
--- MAIN.LUA (UNLOAD FUNKCIÓVAL)
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local modules = _G.Matrix_Modules
+-- INIT.LUA (High-Speed & Safe Loader)
+_G.Matrix_Modules = {}
 
-_G.AutoFarm = false
-
-local Window = Rayfield:CreateWindow({
-   Name = "MATRIX HUB | BLOX FRUITS",
-   Theme = "Bloom", 
-   ConfigurationSaving = { Enabled = false }
-})
-
-local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
-local SettingsTab = Window:CreateTab("Settings", 4483362458) -- Új fül a beállításoknak
-
--- A farm ciklus (a korábbi stabil verzió)
-local function startFarm()
-    task.spawn(function()
-        while _G.AutoFarm do
-            local npc = getClosestNPC() -- (Feltételezzük, hogy a függvény itt van)
-            if npc then
-                local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-                if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 12 then
-                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0), 300)
-                else
-                    modules.tween.Stop()
-                    modules.combat.attack(npc)
-                end
-            end
-            task.wait(0.1)
-        end
+local function loadModule(name)
+    local url = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/modules/" .. name .. ".lua?cache=" .. math.random(1, 999)
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
     end)
+    
+    if success and result then 
+        _G.Matrix_Modules[name] = result 
+        print("[MATRIX] " .. name .. " betöltve.")
+        return true
+    else
+        warn("[MATRIX] Hiba a modul betöltésekor (" .. name .. "): " .. tostring(result))
+        return false
+    end
 end
 
--- UNLOAD FUNKCIÓ
-local function UnloadScript()
-    _G.AutoFarm = false -- Farm leállítása
-    if modules.tween then modules.tween.Stop() end -- Tween takarítása
-    
-    Rayfield:Destroy() -- GUI törlése
-    _G.Matrix_Modules = nil -- Modulok referenciáinak törlése a RAM-ból
-    
-    print("[MATRIX] Script sikeresen unloadolva. RAM felszabadítva.")
+-- Sorrendben töltünk be, és megvárjuk a sikert
+local modulesToLoad = {"tween", "net", "combat"}
+for _, mod in ipairs(modulesToLoad) do
+    local loaded = false
+    repeat
+        loaded = loadModule(mod)
+        if not loaded then task.wait(0.5) end -- Ha hiba van, vár és újrapróbálja
+    until loaded
 end
 
-SettingsTab:CreateButton({
-   Name = "Unload Script",
-   Callback = function()
-      UnloadScript()
-   end,
-})
-
-FarmTab:CreateToggle({
-   Name = "Auto Farm",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.AutoFarm = Value
-      if Value then startFarm() else modules.tween.Stop() end
-   end,
-})
+-- Csak akkor megyünk a main-re, ha minden modul a memóriában van
+print("[MATRIX] Minden modul kész. Fő szkript indítása...")
+task.wait(0.1)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/main.lua?cache=" .. math.random(1, 999)))()
