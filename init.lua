@@ -1,36 +1,31 @@
--- INIT.LUA (Matrix Hub - Pro Safe Loader)
+-- INIT.LUA (Matrix Hub - Loader)
 _G.Matrix_Modules = {}
 
-local function loadModule(name)
-    local url = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/modules/" .. name .. ".lua?cache=" .. math.random(1, 9999)
+local baseUrl = "https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/modules/"
+local moduleFiles = {
+    tween = "tween.lua",
+    combat = "combat.lua",
+    spy = "spy.lua" -- ÚJ: Most már ezt is betöltjük!
+}
+
+local function loadModule(name, fileName)
     local success, result = pcall(function()
-        return loadstring(game:HttpGet(url))()
+        return loadstring(game:HttpGet(baseUrl .. fileName))()
     end)
     
-    if success and result then
+    if success then
         _G.Matrix_Modules[name] = result
-        print("[MATRIX] " .. name .. " betöltve és kész.")
-        return true
+        warn("[MATRIX] Module loaded: " .. name)
     else
-        warn("[MATRIX] Hiba a modulnál (" .. name .. "): " .. tostring(result))
-        return false
+        warn("[MATRIX] Failed to load module: " .. name .. " | Error: " .. result)
     end
 end
 
--- Sorrendben betöltjük és ellenőrizzük őket
-local modulesToLoad = {"tween", "net", "combat"}
-local allLoaded = true
-
-for _, m in ipairs(modulesToLoad) do
-    if not loadModule(m) then
-        allLoaded = false
-    end
+-- Összes modul betöltése
+for name, file in pairs(moduleFiles) do
+    loadModule(name, file)
 end
 
-if allLoaded then
-    print("[MATRIX] Minden modul kész. Fő szkript indítása...")
-    task.wait(1) -- Biztonsági szünet
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/main.lua?cache=" .. math.random(1, 9999)))()
-else
-    warn("[MATRIX] Kritikus hiba: A betöltés megszakadt!")
-end
+-- Fő script indítása
+warn("[MATRIX] Every module ready. Starting Main...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/walterblack-lab/matrixv2/main/main.lua"))()
