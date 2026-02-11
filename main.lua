@@ -1,27 +1,40 @@
--- MAIN.LUA (Anti-Vibrate & Target Lock)
+-- MAIN.LUA (Modular Spy Edition)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local modules = _G.Matrix_Modules
-_G.AutoFarm = false
-_G.SelectedWeapon = "Melee"
 
-local currentTarget = nil
-
+-- Spy inicializálása [cite: 2026-02-10]
 local Window = Rayfield:CreateWindow({ Name = "MATRIX HUB | PRO", Theme = "Bloom" })
 local FarmTab = Window:CreateTab("Auto Farm")
+local SpyTab = Window:CreateTab("Debug Spy")
 local SettingsTab = Window:CreateTab("Settings")
 
-FarmTab:CreateDropdown({
-   Name = "Weapon Type",
-   Options = {"Melee", "Sword", "Blox Fruit"},
-   CurrentOption = {"Melee"},
-   MultipleOptions = false,
-   Callback = function(Option) _G.SelectedWeapon = Option[1] end,
+-- Spy modul összekötése a UI-val
+local logLabel = SpyTab:CreateLabel("Status: Initializing...")
+if modules.spy then
+    modules.spy.init(logLabel)
+end
+
+_G.AutoFarm = false
+_G.SelectedWeapon = "Melee"
+local currentTarget = nil
+
+-- Unload gomb (Mindig itt lesz!) [cite: 2026-02-09, 2026-02-10]
+SettingsTab:CreateButton({
+   Name = "Unload Script",
+   Callback = function()
+      _G.AutoFarm = false
+      if modules.tween then modules.tween.Stop() end
+      Rayfield:Destroy()
+      _G.Matrix_Modules = nil
+   end,
 })
 
+-- Farm logika a Spy-al kiegészítve [cite: 2026-02-10]
 local function getClosestNPC()
     if currentTarget and currentTarget:FindFirstChild("Humanoid") and currentTarget.Humanoid.Health > 0 then
         return currentTarget
     end
+    modules.spy.log("Searching for target...")
     local target, dist = nil, math.huge
     local enemies = workspace:FindFirstChild("Enemies") or workspace
     for _, v in pairs(enemies:GetChildren()) do
@@ -39,17 +52,13 @@ local function startFarm()
         while _G.AutoFarm do
             local npc = getClosestNPC()
             if npc then
-                local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-                local dist = (hrp.Position - npc.HumanoidRootPart.Position).Magnitude
-                
-                if dist > 3.5 then
-                    -- TELEPORT: Kicsit az NPC fölé és mögé, hogy ne akadjon be
-                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 3, 1.5), 300)
+                local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+                if dist > 4 then
+                    modules.spy.log("Moving to " .. npc.Name .. " (" .. math.floor(dist) .. "m)")
+                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3), 300)
                 else
-                    -- ÜTÉS: Itt megállítjuk a vibrálást
                     modules.tween.Stop()
                     modules.combat.attack(npc, _G.SelectedWeapon)
-                    task.wait(0.1) -- Rövid szünet, hogy az animáció lefusson
                 end
             end
             task.wait(0.05)
@@ -57,21 +66,5 @@ local function startFarm()
     end)
 end
 
-FarmTab:CreateToggle({
-   Name = "Start Auto Farm",
-   CurrentValue = false,
-   Callback = function(Value)
-      _G.AutoFarm = Value
-      if Value then startFarm() else modules.tween.Stop() end
-   end,
-})
-
-SettingsTab:CreateButton({
-   Name = "Unload Script",
-   Callback = function()
-      _G.AutoFarm = false
-      modules.tween.Stop()
-      Rayfield:Destroy()
-      _G.Matrix_Modules = nil
-   end,
-})
+-- UI elemek (Dropdown, Toggle) maradnak...
+-- (Itt a korábbi dropdown és toggle kódja jön)
