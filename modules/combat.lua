@@ -1,28 +1,29 @@
--- COMBAT MODULE (Pro Client-Side Clicker)
+-- COMBAT MODULE (Final Clicker)
 local combat = {}
-local VirtualUser = game:GetService("VirtualUser") -- Ez szimulálja a fizikai egérkattintást
+local VirtualUser = game:GetService("VirtualUser")
 
 function combat.attack(targetNpc, weaponType)
-    local char = game.Players.LocalPlayer.Character
-    if not char or not targetNpc or not targetNpc:FindFirstChild("HumanoidRootPart") then return end
+    local lp = game.Players.LocalPlayer
+    local char = lp.Character
+    if not char or not targetNpc then return end
     
+    -- Auto-Equip
     local tool = char:FindFirstChildOfClass("Tool")
-    -- Auto-Equip (Hogy neked ne kelljen elővenni)
     if not tool or (tool and tool.ToolTip ~= weaponType) then
-        local bpTool = game.Players.LocalPlayer.Backpack:FindFirstChild(weaponType) or game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+        local bpTool = lp.Backpack:FindFirstChild(weaponType) or lp.Backpack:FindFirstChildOfClass("Tool")
         if bpTool then char.Humanoid:EquipTool(bpTool) end
     end
 
-    -- NPC-re nézés (LookAt) - Fontos, hogy a karakter arccal az NPC felé álljon
-    local hrp = char.HumanoidRootPart
-    hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetNpc.HumanoidRootPart.Position.X, hrp.Position.Y, targetNpc.HumanoidRootPart.Position.Z))
-
-    -- EGÉRKATTINTÁS SZIMULÁLÁSA
-    -- Ez pontosan azt csinálja, amit te az ujjaddal az egéren
-    if tool then
-        -- Meghívjuk a VirtualUser-t, ami "lenyomja" a bal egérgombot a játékablakban
-        VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-        tool:Activate() -- Elindítja az animációt is
+    -- Pontos célzás
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp and targetNpc:FindFirstChild("HumanoidRootPart") then
+        hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetNpc.HumanoidRootPart.Position.X, hrp.Position.Y, targetNpc.HumanoidRootPart.Position.Z))
+        
+        -- KATTINTÁS SZIMULÁLÁSA
+        -- Ez váltja ki a sebzést, amit a log "out of radius"-nak hitt
+        VirtualUser:CaptureController()
+        VirtualUser:Button1Down(Vector2.new(100, 100), workspace.CurrentCamera.CFrame)
+        if tool then tool:Activate() end
     end
 end
 
