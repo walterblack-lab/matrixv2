@@ -1,4 +1,4 @@
--- COMBAT MODULE (Final Clicker)
+-- COMBAT MODULE (Force Click Edition)
 local combat = {}
 local VirtualUser = game:GetService("VirtualUser")
 
@@ -14,16 +14,19 @@ function combat.attack(targetNpc, weaponType)
         if bpTool then char.Humanoid:EquipTool(bpTool) end
     end
 
-    -- Pontos célzás
+    -- NPC-re nézés (Y tengely fixálva, hogy ne boruljon fel)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp and targetNpc:FindFirstChild("HumanoidRootPart") then
-        hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetNpc.HumanoidRootPart.Position.X, hrp.Position.Y, targetNpc.HumanoidRootPart.Position.Z))
+        local targetPos = targetNpc.HumanoidRootPart.Position
+        hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z))
         
-        -- KATTINTÁS SZIMULÁLÁSA
-        -- Ez váltja ki a sebzést, amit a log "out of radius"-nak hitt
+        -- KATTINTÁS SZIMULÁLÁSA (Ugyanaz, amit te csinálsz kézzel)
         VirtualUser:CaptureController()
-        VirtualUser:Button1Down(Vector2.new(100, 100), workspace.CurrentCamera.CFrame)
-        if tool then tool:Activate() end
+        VirtualUser:ClickButton1(Vector2.new(850, 500)) -- A képernyő közepére kattint
+        
+        if tool then 
+            tool:Activate() 
+        end
     end
 end
 
