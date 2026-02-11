@@ -1,10 +1,10 @@
--- MAIN.LUA (Final Fix - Target Lock & Unload)
+-- MAIN.LUA (Anti-Vibrate & Target Lock)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local modules = _G.Matrix_Modules
 _G.AutoFarm = false
 _G.SelectedWeapon = "Melee"
 
-local currentTarget = nil -- Rögzített célpont
+local currentTarget = nil
 
 local Window = Rayfield:CreateWindow({ Name = "MATRIX HUB | PRO", Theme = "Bloom" })
 local FarmTab = Window:CreateTab("Auto Farm")
@@ -19,11 +19,9 @@ FarmTab:CreateDropdown({
 })
 
 local function getClosestNPC()
-    -- Ha van célpont és él, maradunk rajta (Target Lock)
     if currentTarget and currentTarget:FindFirstChild("Humanoid") and currentTarget.Humanoid.Health > 0 then
         return currentTarget
     end
-    
     local target, dist = nil, math.huge
     local enemies = workspace:FindFirstChild("Enemies") or workspace
     for _, v in pairs(enemies:GetChildren()) do
@@ -44,15 +42,17 @@ local function startFarm()
                 local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
                 local dist = (hrp.Position - npc.HumanoidRootPart.Position).Magnitude
                 
-                -- JAVÍTÁS: Közelebb (3.5) és alacsonyabbra (magasság: 2) megyünk
                 if dist > 3.5 then
-                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 2, 0), 300)
+                    -- TELEPORT: Kicsit az NPC fölé és mögé, hogy ne akadjon be
+                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 3, 1.5), 300)
                 else
+                    -- ÜTÉS: Itt megállítjuk a vibrálást
                     modules.tween.Stop()
                     modules.combat.attack(npc, _G.SelectedWeapon)
+                    task.wait(0.1) -- Rövid szünet, hogy az animáció lefusson
                 end
             end
-            task.wait(0.02) -- Gyorsabb frissítés a simább mozgásért
+            task.wait(0.05)
         end
     end)
 end
@@ -66,7 +66,6 @@ FarmTab:CreateToggle({
    end,
 })
 
--- UNLOAD GOMB (Fixálva, nem fog eltűnni!)
 SettingsTab:CreateButton({
    Name = "Unload Script",
    Callback = function()
