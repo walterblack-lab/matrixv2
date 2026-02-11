@@ -1,10 +1,23 @@
+-- MAIN.LUA (Baganito5 Edition - Multi-Weapon & Unload)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local modules = _G.Matrix_Modules
 _G.AutoFarm = false
+_G.SelectedWeapon = "Melee" -- Alapértelmezett
 
 local Window = Rayfield:CreateWindow({ Name = "MATRIX HUB | PRO", Theme = "Bloom" })
 local FarmTab = Window:CreateTab("Auto Farm")
-local SettingsTab = Window:CreateTab("Settings") -- Itt lesz az Unload
+local SettingsTab = Window:CreateTab("Settings")
+
+-- Választó menü a fegyverekhez
+FarmTab:CreateDropdown({
+   Name = "Weapon Type",
+   Options = {"Melee", "Sword", "Blox Fruit"},
+   CurrentOption = {"Melee"},
+   MultipleOptions = false,
+   Callback = function(Option)
+      _G.SelectedWeapon = Option[1]
+   end,
+})
 
 local function getClosestNPC()
     local target, dist = nil, math.huge
@@ -24,12 +37,11 @@ local function startFarm()
             local npc = getClosestNPC()
             if npc then
                 local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
-                -- Nagyon közel megyünk (5 egység), hogy sebezzen
                 if dist > 5 then
                     modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0), 300)
                 else
                     modules.tween.Stop()
-                    modules.combat.attack(npc)
+                    modules.combat.attack(npc, _G.SelectedWeapon)
                 end
             end
             task.wait(0.05)
@@ -38,7 +50,7 @@ local function startFarm()
 end
 
 FarmTab:CreateToggle({
-   Name = "Auto Farm",
+   Name = "Start Auto Farm",
    CurrentValue = false,
    Callback = function(Value)
       _G.AutoFarm = Value
@@ -46,7 +58,7 @@ FarmTab:CreateToggle({
    end,
 })
 
--- UNLOAD FUNKCIÓ (VISSZATÉRT ÉS JEGYEZTEM)
+-- UNLOAD (Jegyezve: Soha nem marad ki!)
 SettingsTab:CreateButton({
    Name = "Unload Script",
    Callback = function()
@@ -54,6 +66,5 @@ SettingsTab:CreateButton({
       modules.tween.Stop()
       Rayfield:Destroy()
       _G.Matrix_Modules = nil
-      print("[MATRIX] Unloaded.")
    end,
 })
