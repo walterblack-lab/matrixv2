@@ -5,7 +5,7 @@ local modules = _G.Matrix_Modules
 _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
-   Name = "MATRIX HUB | BLOX FRUITS",
+   Name = "matrix_test",
    Theme = "Bloom",
    ConfigurationSaving = { Enabled = false }
 })
