@@ -1,11 +1,17 @@
--- MAIN.LUA (Final Balanced Version)
+-- MAIN.LUA (Safe Execution)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local modules = _G.Matrix_Modules
+
+-- Ellenőrizzük, hogy a modulok tényleg ott vannak-e
+if not modules or not modules.combat or not modules.tween then
+    warn("[MATRIX ERROR] Modulok hiányoznak a main indításakor!")
+    return
+end
 
 _G.AutoFarm = false
 
 local Window = Rayfield:CreateWindow({
-   Name = "matrix_test",
+   Name = "MATRIX HUB | BLOX FRUITS",
    Theme = "Bloom",
    ConfigurationSaving = { Enabled = false }
 })
@@ -13,7 +19,28 @@ local Window = Rayfield:CreateWindow({
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
--- (Itt a getClosestNPC függvény, amit korábban használtunk)
+-- NPC Kereső (ez fontos, hogy létezzen a startFarm előtt!)
+local function getClosestNPC()
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return nil end
+    
+    local target = nil
+    local dist = math.huge
+    local myPos = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not myPos then return nil end
+
+    for _, v in pairs(enemies:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+            local d = (v.HumanoidRootPart.Position - myPos.Position).Magnitude
+            if d < dist then
+                dist = d
+                target = v
+            end
+        end
+    end
+    return target
+end
 
 local function startFarm()
     task.spawn(function()
@@ -21,8 +48,10 @@ local function startFarm()
             local npc = getClosestNPC()
             if npc and modules.tween and modules.combat then
                 local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-                if (hrp.Position - npc.HumanoidRootPart.Position).Magnitude > 12 then
-                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0), 300)
+                local dist = (hrp.Position - npc.HumanoidRootPart.Position).Magnitude
+                
+                if dist > 15 then
+                    modules.tween.To(npc.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0), 300)
                 else
                     modules.tween.Stop()
                     modules.combat.attack(npc)
